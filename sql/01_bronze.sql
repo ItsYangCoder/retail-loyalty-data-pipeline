@@ -1,48 +1,125 @@
 -- ============================================================
--- SARI-SARI STORE DATA PIPELINE
+-- RETAIL TRANSACTIONS + LOYALTY CUSTOMER DATA PIPELINE
 -- 01 - BRONZE LAYER
 -- ============================================================
+--
+-- PURPOSE:
+-- Preserve the source data before cleaning and transformation.
+--
+-- SOURCE 1:
+-- Transaction Details
+--
+-- SOURCE 2:
+-- Loyalty Cardholders
+--
+-- Bronze tables:
+-- workspace.bronze.transaction_details_raw
+-- workspace.bronze.loyalty_cardholders_raw
+-- ============================================================
+
 
 USE CATALOG workspace;
-USE SCHEMA sari_bronze;
+USE SCHEMA bronze;
 
--- Create landing volume for raw CSV files
-CREATE VOLUME IF NOT EXISTS workspace.sari_bronze.source_files
-COMMENT 'Landing area for incoming Sari-Sari Store source CSV files';
 
--- Create the Bronze raw table
-CREATE TABLE IF NOT EXISTS workspace.sari_bronze.sari_sari_transactions_raw (
-    Transaction_ID STRING,
-    Date STRING,
-    Item STRING,
-    Quantity STRING,
-    Unit_Price STRING,
-    Total_Amount STRING,
-    Payment_Method STRING,
-    Customer_Type STRING
+-- ============================================================
+-- 1. CREATE LANDING VOLUME
+-- ============================================================
+--
+-- The Volume can be used later when another batch of source
+-- files arrives.
+-- ============================================================
+
+CREATE VOLUME IF NOT EXISTS workspace.bronze.source_files
+COMMENT 'Landing area for Retail Transaction and Loyalty source files';
+
+
+-- ============================================================
+-- 2. TRANSACTION DETAILS RAW TABLE
+-- ============================================================
+--
+-- Grain:
+-- One row represents one purchased product / transaction line.
+--
+-- The table preserves the source values before Silver cleaning.
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS workspace.bronze.transaction_details_raw (
+
+    `# customer_id` BIGINT,
+    transaction_id BIGINT,
+    receipt_date STRING,
+    transaction_date TIMESTAMP,
+    receipt_number STRING,
+    product_sku STRING,
+    product_brand STRING,
+    quantity BIGINT,
+    total_unit_price DOUBLE,
+    retailer STRING,
+    branch STRING
+
 )
-COMMENT 'Raw Sari-Sari Store transaction records loaded from source CSV files';
-
--- Check Bronze row count
--- Expected Result 5100
-SELECT COUNT(*) AS bronze_row_count
-FROM workspace.sari_bronze.sari_sari_transactions_raw;
+COMMENT 'Raw Retail Transaction Details source data';
 
 
--- 3. LOAD NEW SOURCE FILES
-COPY INTO workspace.sari_bronze.sari_sari_transactions_raw
-FROM '/Volumes/workspace/sari_bronze/source_files/'
-FILEFORMAT = CSV
-FORMAT_OPTIONS (
-    'header' = 'true',
-    'inferSchema' = 'false'
-);
+-- ============================================================
+-- 3. LOYALTY CARDHOLDERS RAW TABLE
+-- ============================================================
+--
+-- Grain:
+-- One row represents one registered loyalty member.
+-- ============================================================
 
--- Preview the raw records
+CREATE TABLE IF NOT EXISTS workspace.bronze.loyalty_cardholders_raw (
+
+    user_id BIGINT,
+    birthday DATE,
+    registered_date TIMESTAMP
+
+)
+COMMENT 'Raw Loyalty Cardholders source data';
+
+
+-- ============================================================
+-- 4. BRONZE ROW COUNT VALIDATION
+-- ============================================================
+--
+-- Current expected baseline:
+--
+-- Transaction Details = 3,167
+-- Loyalty Cardholders = 5,949
+--
+-- These counts will increase when future batches are loaded.
+-- ============================================================
+
+SELECT
+    'Transaction Details' AS source,
+    COUNT(*) AS row_count
+
+FROM workspace.bronze.transaction_details_raw
+
+UNION ALL
+
+SELECT
+    'Loyalty Cardholders' AS source,
+    COUNT(*) AS row_count
+
+FROM workspace.bronze.loyalty_cardholders_raw;
+
+
+-- ============================================================
+-- 5. TRANSACTION DATA PREVIEW
+-- ============================================================
+
 SELECT *
-FROM workspace.sari_bronze.sari_sari_transactions_raw
+FROM workspace.bronze.transaction_details_raw
 LIMIT 20;
 
 
--- Check table structure
-DESCRIBE TABLE workspace.sari_bronze.sari_sari_transactions_raw;
+-- ============================================================
+-- 6. LOYALTY DATA PREVIEW
+-- ============================================================
+
+SELECT *
+FROM workspace.bronze.loyalty_cardholders_raw
+LIMIT 20;

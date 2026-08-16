@@ -1,22 +1,21 @@
 -- ============================================================
--- SARI-SARI STORE DATA PIPELINE
+-- RETAIL TRANSACTIONS + LOYALTY CUSTOMER DATA PIPELINE
 -- 00 - PROJECT SETUP
 -- ============================================================
-
 USE CATALOG workspace;
 
--- Bronze: preserves the original Sari-Sari Store source data
-CREATE SCHEMA IF NOT EXISTS workspace.sari_bronze
-COMMENT 'Raw and preserved source data for the Sari-Sari Store pipeline';
+-- Bronze: preserves raw source data
+CREATE SCHEMA IF NOT EXISTS workspace.bronze
+COMMENT 'Raw and preserved retail transaction and loyalty source data';
 
 -- Silver: cleaned and standardized data
-CREATE SCHEMA IF NOT EXISTS workspace.sari_silver
-COMMENT 'Cleaned and standardized data for the Sari-Sari Store pipeline';
+CREATE SCHEMA IF NOT EXISTS workspace.silver
+COMMENT 'Cleaned and standardized transaction and loyalty data';
+
+-- Quality: rejected, suspicious, and validation records
+CREATE SCHEMA IF NOT EXISTS workspace.quality
+COMMENT 'Data quality findings and rejected or suspicious records';
 
 -- Gold: business-ready analytical tables
-CREATE SCHEMA IF NOT EXISTS workspace.sari_gold
-COMMENT 'Business-ready tables for Sari-Sari Store analysis and dashboarding';
-
--- Quality: data-quality findings and validation results
-CREATE SCHEMA IF NOT EXISTS workspace.sari_quality
-COMMENT 'Data-quality issues and validation results for the Sari-Sari Store pipeline';
+CREATE SCHEMA IF NOT EXISTS workspace.gold
+COMMENT 'Business-ready tables for purchasing behavior analysis';
