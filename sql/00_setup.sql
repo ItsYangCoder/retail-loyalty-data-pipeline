@@ -1,0 +1,2 @@
+-- Project setup
+-- Creates the objects needed for the Sari-Sari Store pipeline.
