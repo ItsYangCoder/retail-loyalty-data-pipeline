@@ -1,51 +1,15 @@
--- ============================================================
--- RETAIL TRANSACTIONS + LOYALTY CUSTOMER DATA PIPELINE
--- 01 - BRONZE LAYER
--- ============================================================
---
--- PURPOSE:
--- Preserve the source data before cleaning and transformation.
---
--- SOURCE 1:
--- Transaction Details
---
--- SOURCE 2:
--- Loyalty Cardholders
---
--- Bronze tables:
--- workspace.bronze.transaction_details_raw
--- workspace.bronze.loyalty_cardholders_raw
--- ============================================================
-
+-- Bronze layer
+-- Keeps the original transaction and loyalty data before cleaning.
 
 USE CATALOG workspace;
 USE SCHEMA bronze;
 
+-- Landing area for source files
+CREATE VOLUME IF NOT EXISTS workspace.bronze.source_files;
 
--- ============================================================
--- 1. CREATE LANDING VOLUME
--- ============================================================
---
--- The Volume can be used later when another batch of source
--- files arrives.
--- ============================================================
-
-CREATE VOLUME IF NOT EXISTS workspace.bronze.source_files
-COMMENT 'Landing area for Retail Transaction and Loyalty source files';
-
-
--- ============================================================
--- 2. TRANSACTION DETAILS RAW TABLE
--- ============================================================
---
--- Grain:
--- One row represents one purchased product / transaction line.
---
--- The table preserves the source values before Silver cleaning.
--- ============================================================
-
+-- Raw transaction data
+-- One row represents one product line from a transaction.
 CREATE TABLE IF NOT EXISTS workspace.bronze.transaction_details_raw (
-
     `# customer_id` BIGINT,
     transaction_id BIGINT,
     receipt_date STRING,
@@ -57,45 +21,20 @@ CREATE TABLE IF NOT EXISTS workspace.bronze.transaction_details_raw (
     total_unit_price DOUBLE,
     retailer STRING,
     branch STRING
+);
 
-)
-COMMENT 'Raw Retail Transaction Details source data';
-
-
--- ============================================================
--- 3. LOYALTY CARDHOLDERS RAW TABLE
--- ============================================================
---
--- Grain:
+-- Raw loyalty data
 -- One row represents one registered loyalty member.
--- ============================================================
-
 CREATE TABLE IF NOT EXISTS workspace.bronze.loyalty_cardholders_raw (
-
     user_id BIGINT,
     birthday DATE,
     registered_date TIMESTAMP
+);
 
-)
-COMMENT 'Raw Loyalty Cardholders source data';
-
-
--- ============================================================
--- 4. BRONZE ROW COUNT VALIDATION
--- ============================================================
---
--- Current expected baseline:
---
--- Transaction Details = 3,167
--- Loyalty Cardholders = 5,949
---
--- These counts will increase when future batches are loaded.
--- ============================================================
-
+-- Check current row counts
 SELECT
     'Transaction Details' AS source,
     COUNT(*) AS row_count
-
 FROM workspace.bronze.transaction_details_raw
 
 UNION ALL
@@ -103,23 +42,4 @@ UNION ALL
 SELECT
     'Loyalty Cardholders' AS source,
     COUNT(*) AS row_count
-
 FROM workspace.bronze.loyalty_cardholders_raw;
-
-
--- ============================================================
--- 5. TRANSACTION DATA PREVIEW
--- ============================================================
-
-SELECT *
-FROM workspace.bronze.transaction_details_raw
-LIMIT 20;
-
-
--- ============================================================
--- 6. LOYALTY DATA PREVIEW
--- ============================================================
-
-SELECT *
-FROM workspace.bronze.loyalty_cardholders_raw
-LIMIT 20;
