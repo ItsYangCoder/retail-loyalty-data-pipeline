@@ -11,7 +11,7 @@ USE SCHEMA quality;
 CREATE OR REPLACE TABLE workspace.quality.invalid_transactions AS
 
 SELECT
-    `# customer_id` AS customer_id,
+    customer_id,
     transaction_id,
     receipt_date,
     transaction_date,
@@ -40,7 +40,7 @@ WHERE quantity <= 0
 CREATE OR REPLACE TABLE workspace.quality.receipt_date_issues AS
 
 SELECT
-    `# customer_id` AS customer_id,
+    customer_id,
     transaction_id,
     TRY_TO_TIMESTAMP(receipt_date, 'M/d/yy H:mm') AS receipt_date,
     transaction_date,

@@ -10,7 +10,7 @@ USE SCHEMA bronze;
 CREATE TABLE IF NOT EXISTS workspace.bronze.transaction_details_current AS
 
 SELECT
-    `# customer_id` AS customer_id,
+    customer_id,
     transaction_id,
     receipt_date,
     transaction_date,
@@ -29,7 +29,7 @@ FROM workspace.bronze.transaction_details_raw;
 CREATE TABLE IF NOT EXISTS workspace.bronze.transaction_details_staging AS
 
 SELECT
-    `# customer_id` AS customer_id,
+    customer_id,
     transaction_id,
     receipt_date,
     transaction_date,
