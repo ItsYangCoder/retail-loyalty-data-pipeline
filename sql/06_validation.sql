@@ -1,6 +1,6 @@
 -- ============================================================
--- VALIDATION LAYER
--- Sari-Sari Retail + Loyalty Pipeline
+-- RETAIL TRANSACTIONS + LOYALTY CUSTOMER DATA PIPELINE
+-- 06 - VALIDATION
 -- ============================================================
 
 USE CATALOG workspace;
@@ -12,7 +12,7 @@ USE CATALOG workspace;
 SELECT
     'Raw Transactions' AS dataset,
     COUNT(*) AS records
-FROM workspace.sari_bronze.sari_sari_transactions_raw
+FROM workspace.bronze.transaction_details_raw
 
 UNION ALL
 
@@ -36,22 +36,45 @@ SELECT
 FROM workspace.sari_silver.clean_loyalty;
 
 -- ============================================================
--- TRANSACTIONS DATA QUALITY CHECKS
+-- QUALITY TABLE RECONCILIATION
+-- ============================================================
+
+SELECT
+    'Invalid Transactions' AS quality_check,
+    COUNT(*) AS records
+FROM workspace.quality.invalid_transactions
+
+UNION ALL
+
+SELECT
+    'Receipt Date Issues',
+    COUNT(*)
+FROM workspace.quality.receipt_date_issues
+
+UNION ALL
+
+SELECT
+    'Invalid Loyalty Birthdays',
+    COUNT(*)
+FROM workspace.quality.invalid_loyalty_birthdays;
+
+-- ============================================================
+-- CLEAN TRANSACTIONS VALIDATION
 -- ============================================================
 
 SELECT
     SUM(CASE WHEN customer_id IS NULL THEN 1 ELSE 0 END) AS null_customer_id,
     SUM(CASE WHEN transaction_id IS NULL THEN 1 ELSE 0 END) AS null_transaction_id,
-    SUM(CASE WHEN product_sku IS NULL THEN 1 ELSE 0 END) AS null_product_sku,
     SUM(CASE WHEN quantity IS NULL THEN 1 ELSE 0 END) AS null_quantity,
     SUM(CASE WHEN quantity <= 0 THEN 1 ELSE 0 END) AS invalid_quantity,
     SUM(CASE WHEN total_unit_price IS NULL THEN 1 ELSE 0 END) AS null_total_unit_price,
-    SUM(CASE WHEN total_unit_price <= 0 THEN 1 ELSE 0 END) AS invalid_total_unit_price,
-    SUM(CASE WHEN unit_price IS NULL THEN 1 ELSE 0 END) AS null_unit_price
+    SUM(CASE WHEN unit_price IS NULL THEN 1 ELSE 0 END) AS null_unit_price,
+    SUM(CASE WHEN cleaned_product_sku IS NULL THEN 1 ELSE 0 END) AS null_cleaned_product_sku,
+    SUM(CASE WHEN cleaned_product_brand IS NULL THEN 1 ELSE 0 END) AS null_cleaned_product_brand
 FROM workspace.sari_silver.clean_transactions;
 
 -- ============================================================
--- LOYALTY DATA QUALITY CHECKS
+-- CLEAN LOYALTY VALIDATION
 -- ============================================================
 
 SELECT
@@ -82,44 +105,47 @@ GROUP BY user_id
 HAVING COUNT(*) > 1;
 
 -- ============================================================
--- BUSINESS RULE VALIDATION
--- ============================================================
-
-SELECT
-    COUNT(*) AS transaction_before_receipt
-FROM workspace.sari_silver.clean_transactions
-WHERE transaction_date > receipt_date;
-
-SELECT
-    COUNT(*) AS mismatched_months
-FROM workspace.sari_silver.clean_transactions
-WHERE transaction_month <> receipt_month;
-
-SELECT
-    COUNT(*) AS missing_brand_after_cleaning
-FROM workspace.sari_silver.clean_transactions
-WHERE cleaned_product_brand IS NULL;
-
--- ============================================================
 -- CLEANING RULE VALIDATION
 -- ============================================================
 
-SELECT
-    COUNT(*) AS uncleaned_sku_records
+-- SKU cleanup validation
+
+SELECT COUNT(*) AS uncleaned_sku_records
 FROM workspace.sari_silver.clean_transactions
 WHERE cleaned_product_sku LIKE '%$%'
-   OR cleaned_product_sku LIKE '%*%'
-   OR cleaned_product_sku LIKE '%<<%';
+   OR cleaned_product_sku LIKE '%<<%'
+   OR cleaned_product_sku LIKE '%*%';
 
-SELECT
-    COUNT(*) AS uncleaned_receipt_numbers
+-- Receipt number cleanup validation
+
+SELECT COUNT(*) AS uncleaned_receipts
 FROM workspace.sari_silver.clean_transactions
 WHERE cleaned_receipt_number LIKE '%-%';
 
-SELECT
-    COUNT(*) AS non_uppercase_branches
+-- Branch standardization validation
+
+SELECT COUNT(*) AS non_uppercase_branches
 FROM workspace.sari_silver.clean_transactions
 WHERE branch_upper <> UPPER(branch_upper);
+
+-- Product brand enrichment validation
+
+SELECT
+    cleaned_product_brand,
+    COUNT(*) AS records
+FROM workspace.sari_silver.clean_transactions
+GROUP BY cleaned_product_brand
+ORDER BY records DESC;
+
+-- ============================================================
+-- DATE VALIDATION
+-- ============================================================
+
+SELECT
+    COUNT(*) AS receipt_after_transaction_more_than_1_day
+FROM workspace.sari_silver.clean_transactions
+WHERE TRY_TO_TIMESTAMP(receipt_date, 'M/d/yy H:mm')
+      > transaction_date + INTERVAL 1 DAY;
 
 -- ============================================================
 -- AGE VALIDATION
@@ -132,7 +158,7 @@ FROM workspace.sari_silver.clean_loyalty
 WHERE age_at_registration IS NOT NULL;
 
 -- ============================================================
--- SAMPLE DATA REVIEW
+-- SAMPLE REVIEW
 -- ============================================================
 
 SELECT *
