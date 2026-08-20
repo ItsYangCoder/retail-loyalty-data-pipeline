@@ -12,7 +12,7 @@ USE SCHEMA silver;
 CREATE OR REPLACE TEMP VIEW transactions_step AS
 
 SELECT
-    `# customer_id` AS customer_id,
+    customer_id,
     transaction_id,
 
     -- convert receipt date from text to timestamp

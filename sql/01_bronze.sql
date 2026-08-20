@@ -10,7 +10,7 @@ CREATE VOLUME IF NOT EXISTS workspace.bronze.source_files;
 -- Raw transaction data
 -- One row represents one product line from a transaction.
 CREATE TABLE IF NOT EXISTS workspace.bronze.transaction_details_raw (
-    `# customer_id` BIGINT,
+    customer_id BIGINT,
     transaction_id BIGINT,
     receipt_date STRING,
     transaction_date TIMESTAMP,
