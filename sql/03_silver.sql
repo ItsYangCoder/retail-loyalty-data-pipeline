@@ -40,3 +40,26 @@ SELECT
         ELSE product_brand 
     END AS cleaned_product_brand
 FROM  workspace.sari_bronze.sari_sari_transactions_raw;
+
+
+--  SILVER LAYER: LOYALTY CARDHOLDERS
+CREATE OR REPLACE TABLE workspace.sari_silver.clean_loyalty AS
+    SELECT 
+    *, 
+    TRY_TO_DATE(birthday, 'dd/MM/yyyy') AS birthday_formatted,
+    DATEDIFF(YEAR, TRY_TO_DATE(birthday, 'dd/MM/yyyy'), registered_date) AS age_at_registration
+FROM workspace.bronze.loyalty_cardholders_raw;
+
+
+SELECT COUNT(*)
+FROM workspace.sari_silver.clean_transactions;
+SELECT COUNT(*)
+FROM workspace.sari_silver.clean_loyalty;
+
+SELECT *
+FROM workspace.sari_silver.clean_transactions
+LIMIT 20;
+
+SELECT *
+FROM workspace.sari_silver.clean_loyalty
+LIMIT 20;
