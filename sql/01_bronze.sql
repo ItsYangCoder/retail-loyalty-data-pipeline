@@ -35,11 +35,12 @@ CREATE TABLE IF NOT EXISTS workspace.bronze.loyalty_cardholders_raw (
 SELECT
     'Transaction Details' AS source,
     COUNT(*) AS row_count
-FROM workspace.bronze.transaction_details_raw
+FROM read_files(
+  '/Volumes/workspace/bronze/source_files/transaction_details_raw.csv')
 
 UNION ALL
 
 SELECT
     'Loyalty Cardholders' AS source,
     COUNT(*) AS row_count
-FROM workspace.bronze.loyalty_cardholders_raw;
+FROM read_files('/Volumes/workspace/bronze/source_files/loyalty_cardholders_raw.csv');
