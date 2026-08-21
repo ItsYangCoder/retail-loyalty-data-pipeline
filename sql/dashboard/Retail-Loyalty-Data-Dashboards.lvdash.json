@@ -1,0 +1,1520 @@
+{
+  "datasets": [
+    {
+      "name": "6a30cffb",
+      "displayName": "gold_customer_transactions",
+      "config": {
+        "version": "1.1",
+        "source": "workspace.gold.gold_customer_transactions",
+        "dimensions": [
+          {
+            "expr": "source.*"
+          }
+        ],
+        "measures": [
+          {
+            "name": "count",
+            "expr": "COUNT(*)",
+            "comment": "Represents the total number of rows in the dataset. Use this measure to count all",
+            "displayName": "Count"
+          }
+        ]
+      }
+    },
+    {
+      "name": "39cbc52f",
+      "displayName": "average_basket",
+      "queryLines": [
+        "SELECT\r\n",
+        "    ROUND(\r\n",
+        "        SUM(recorded_sales) /\r\n",
+        "        COUNT(DISTINCT transaction_id),\r\n",
+        "        2\r\n",
+        "    ) AS average_basket\r\n",
+        "FROM workspace.gold.gold_customer_transactions;"
+      ]
+    },
+    {
+      "name": "a1118899",
+      "displayName": "average_spend_per_member",
+      "queryLines": [
+        "SELECT\r\n",
+        "    ROUND(\r\n",
+        "        SUM(recorded_sales) /\r\n",
+        "        COUNT(DISTINCT customer_id),\r\n",
+        "        2\r\n",
+        "    ) AS average_spend_per_member\r\n",
+        "FROM workspace.gold.gold_customer_transactions;"
+      ]
+    },
+    {
+      "name": "2d9ddd7f",
+      "displayName": "transactions_per_member",
+      "queryLines": [
+        "SELECT\r\n",
+        "    ROUND(\r\n",
+        "        COUNT(DISTINCT transaction_id) /\r\n",
+        "        COUNT(DISTINCT customer_id),\r\n",
+        "        2\r\n",
+        "    ) AS transactions_per_member\r\n",
+        "FROM workspace.gold.gold_customer_transactions;"
+      ]
+    },
+    {
+      "name": "338cac6a",
+      "displayName": "average_spend_by_age_group",
+      "queryLines": [
+        "SELECT\r\n",
+        "    age_group,\r\n",
+        "    ROUND(\r\n",
+        "        SUM(recorded_sales) /\r\n",
+        "        COUNT(DISTINCT customer_id),\r\n",
+        "        2\r\n",
+        "    ) AS average_spend_per_member\r\n",
+        "FROM workspace.gold.gold_customer_transactions\r\n",
+        "WHERE age_group IS NOT NULL\r\n",
+        "GROUP BY age_group\r\n",
+        "ORDER BY average_spend_per_member DESC;"
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "a004bfe3",
+      "displayName": "Sales Performance Overview",
+      "layout": [
+        {
+          "widget": {
+            "name": "94763ec9",
+            "multilineTextboxSpec": {
+              "lines": [
+                "# <span style=\"font-weight: 700;\">Sales Performance Overview</span>\n",
+                "\n",
+                "*Quick view of sales performance and business trends.*"
+              ],
+              "verticalAlign": "VERTICAL_ALIGN_TOP"
+            },
+            "specExtensions": {
+              "widgetBackgroundColor": {
+                "dark": "#AB4057"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 12,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "total-sales",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "6a30cffb",
+                  "fields": [
+                    {
+                      "name": "sum(recorded_sales)",
+                      "expression": "SUM(`recorded_sales`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "showTitle": true,
+                "title": "Total Sales",
+                "showDescription": true,
+                "description": "How much revenue was generated?"
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(recorded_sales)",
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 2
+                    }
+                  },
+                  "formatTemplate": "₱{{ @formatted }}"
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            },
+            "specExtensions": {
+              "widgetBackgroundColor": {
+                "dark": "#091A36"
+              }
+            }
+          },
+          "position": {
+            "x": 9,
+            "y": 6,
+            "width": 3,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "035d81af",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "6a30cffb",
+                  "fields": [
+                    {
+                      "name": "countdistinct(transaction_id)",
+                      "expression": "COUNT(DISTINCT `transaction_id`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "showTitle": true,
+                "title": "Total Transactions",
+                "showDescription": true,
+                "description": "How many purchases were made?"
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "countdistinct(transaction_id)",
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 2
+                    }
+                  },
+                  "formatTemplate": "{{ @formatted }}"
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            },
+            "specExtensions": {
+              "widgetBackgroundColor": {
+                "dark": "#091A36"
+              }
+            }
+          },
+          "position": {
+            "x": 9,
+            "y": 9,
+            "width": 3,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "654514eb",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "6a30cffb",
+                  "fields": [
+                    {
+                      "name": "sum(quantity)",
+                      "expression": "SUM(`quantity`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "showTitle": true,
+                "title": "Units Sold",
+                "showDescription": true,
+                "description": "How many items were sold?"
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(quantity)",
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 2
+                    }
+                  },
+                  "formatTemplate": "{{ @formatted }}"
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            },
+            "specExtensions": {
+              "widgetBackgroundColor": {
+                "dark": "#091A36"
+              }
+            }
+          },
+          "position": {
+            "x": 9,
+            "y": 12,
+            "width": 3,
+            "height": 4
+          }
+        },
+        {
+          "widget": {
+            "name": "0e41325e",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "6a30cffb",
+                  "fields": [
+                    {
+                      "name": "countdistinct(customer_id)",
+                      "expression": "COUNT(DISTINCT `customer_id`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "showTitle": true,
+                "title": "Purchasing Customers",
+                "showDescription": true,
+                "description": "How many customers bought?"
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "countdistinct(customer_id)",
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 2
+                    }
+                  },
+                  "formatTemplate": "{{ @formatted }}"
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            },
+            "specExtensions": {
+              "widgetBackgroundColor": {
+                "dark": "#091A36"
+              }
+            }
+          },
+          "position": {
+            "x": 9,
+            "y": 16,
+            "width": 3,
+            "height": 4
+          }
+        },
+        {
+          "widget": {
+            "name": "102c24f4",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "39cbc52f",
+                  "fields": [
+                    {
+                      "name": "average_basket",
+                      "expression": "`average_basket`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "showTitle": true,
+                "title": "Average Basket",
+                "showDescription": true,
+                "description": "How much was spent per transaction?"
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "average_basket",
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 2
+                    }
+                  },
+                  "formatTemplate": "₱{{ @formatted }}"
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            },
+            "specExtensions": {
+              "widgetBackgroundColor": {
+                "dark": "#091A36"
+              }
+            }
+          },
+          "position": {
+            "x": 9,
+            "y": 20,
+            "width": 3,
+            "height": 4
+          }
+        },
+        {
+          "widget": {
+            "name": "sa1",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "6a30cffb",
+                  "fields": [
+                    {
+                      "name": "sum(recorded_sales)",
+                      "expression": "SUM(`recorded_sales`)"
+                    },
+                    {
+                      "name": "retailer",
+                      "expression": "`retailer`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "showDescription": true,
+                "description": "Which retailer generates the most sales?",
+                "showTitle": true,
+                "title": "Sales by Retailer"
+              },
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "sum(recorded_sales)",
+                  "axis": {
+                    "title": "SALES"
+                  },
+                  "displayName": "SUM OF RECORDED SALES",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "y": {
+                  "fieldName": "retailer",
+                  "displayName": "RETAILER",
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "x-reversed"
+                    }
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            },
+            "specExtensions": {
+              "widgetBackgroundColor": {
+                "dark": "#000000"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 6,
+            "width": 9,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "monthly-sales-trend",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "6a30cffb",
+                  "fields": [
+                    {
+                      "name": "monthly(transaction_date)",
+                      "expression": "DATE_TRUNC(\"MONTH\", `transaction_date`)"
+                    },
+                    {
+                      "name": "sum(recorded_sales)",
+                      "expression": "SUM(`recorded_sales`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "showTitle": true,
+                "title": "Monthly Sales Trend",
+                "showDescription": true,
+                "description": "How do sales change over time?"
+              },
+              "mark": {
+                "size": 1.5
+              },
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "monthly(transaction_date)",
+                  "displayName": "TRANSACTION DATE",
+                  "scale": {
+                    "type": "temporal"
+                  }
+                },
+                "y": {
+                  "fieldName": "sum(recorded_sales)",
+                  "axis": {
+                    "title": "SALES"
+                  },
+                  "displayName": "SUM OF RECORDED SALES",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            },
+            "specExtensions": {
+              "widgetBackgroundColor": {
+                "dark": "#000000"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 12,
+            "width": 9,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "sales-by-product-brand",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "6a30cffb",
+                  "fields": [
+                    {
+                      "name": "product_brand",
+                      "expression": "`product_brand`"
+                    },
+                    {
+                      "name": "sum(recorded_sales)",
+                      "expression": "SUM(`recorded_sales`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "showTitle": true,
+                "title": "Sales by Product Brand",
+                "showDescription": true,
+                "description": "Which brands generate the most sales?"
+              },
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "product_brand",
+                  "displayName": "PRODUCT BRAND",
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "y-reversed"
+                    }
+                  }
+                },
+                "y": {
+                  "fieldName": "sum(recorded_sales)",
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 2
+                    }
+                  },
+                  "axis": {
+                    "title": "SALES"
+                  },
+                  "displayName": "SUM OF RECORDED SALES",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            },
+            "specExtensions": {
+              "widgetBackgroundColor": {
+                "dark": "#000000"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 18,
+            "width": 9,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "transaction-date",
+            "queries": [
+              {
+                "name": "dashboards/01f19d5be1b518358ce3db0b6f43447c/datasets/01f19d5ca5fe12b5ae63049042dd23a1_transaction_date",
+                "query": {
+                  "datasetName": "6a30cffb",
+                  "fields": [
+                    {
+                      "name": "transaction_date",
+                      "expression": "`transaction_date`"
+                    },
+                    {
+                      "name": "transaction_date_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "showTitle": true,
+                "title": "Transaction Date",
+                "showDescription": true,
+                "description": "View sales for a selected period."
+              },
+              "widgetType": "filter-date-range-picker",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "transaction_date",
+                    "queryName": "dashboards/01f19d5be1b518358ce3db0b6f43447c/datasets/01f19d5ca5fe12b5ae63049042dd23a1_transaction_date"
+                  }
+                ]
+              }
+            },
+            "specExtensions": {
+              "widgetBackgroundColor": {
+                "dark": "#320636"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 2,
+            "width": 6,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "retailer",
+            "queries": [
+              {
+                "name": "dashboards/01f19d5be1b518358ce3db0b6f43447c/datasets/01f19d5ca5fe12b5ae63049042dd23a1_retailer",
+                "query": {
+                  "datasetName": "6a30cffb",
+                  "fields": [
+                    {
+                      "name": "retailer",
+                      "expression": "`retailer`"
+                    },
+                    {
+                      "name": "retailer_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "showTitle": true,
+                "title": "Retailer",
+                "showDescription": true,
+                "description": "View sales by selected retailers."
+              },
+              "widgetType": "filter-multi-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "retailer",
+                    "queryName": "dashboards/01f19d5be1b518358ce3db0b6f43447c/datasets/01f19d5ca5fe12b5ae63049042dd23a1_retailer"
+                  }
+                ]
+              }
+            },
+            "specExtensions": {
+              "widgetBackgroundColor": {
+                "dark": "#320636"
+              },
+              "widgetBorderColor": {
+                "dark": "#181C11"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 4,
+            "width": 6,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "product-brand1",
+            "queries": [
+              {
+                "name": "dashboards/01f19d5be1b518358ce3db0b6f43447c/datasets/01f19d5ca5fe12b5ae63049042dd23a1_product_brand",
+                "query": {
+                  "datasetName": "6a30cffb",
+                  "fields": [
+                    {
+                      "name": "product_brand",
+                      "expression": "`product_brand`"
+                    },
+                    {
+                      "name": "product_brand_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "showTitle": true,
+                "title": "Product Brand",
+                "showDescription": true,
+                "description": "View sales by selected brands."
+              },
+              "widgetType": "filter-multi-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "product_brand",
+                    "queryName": "dashboards/01f19d5be1b518358ce3db0b6f43447c/datasets/01f19d5ca5fe12b5ae63049042dd23a1_product_brand"
+                  }
+                ]
+              }
+            },
+            "specExtensions": {
+              "widgetBackgroundColor": {
+                "dark": "#320636"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 2,
+            "width": 6,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "age-group",
+            "queries": [
+              {
+                "name": "dashboards/01f19d5be1b518358ce3db0b6f43447c/datasets/01f19d5ca5fe12b5ae63049042dd23a1_age_group",
+                "query": {
+                  "datasetName": "6a30cffb",
+                  "fields": [
+                    {
+                      "name": "age_group",
+                      "expression": "`age_group`"
+                    },
+                    {
+                      "name": "age_group_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "showTitle": true,
+                "title": "Age Group",
+                "showDescription": true,
+                "description": "Compare sales across age groups."
+              },
+              "widgetType": "filter-multi-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "age_group",
+                    "queryName": "dashboards/01f19d5be1b518358ce3db0b6f43447c/datasets/01f19d5ca5fe12b5ae63049042dd23a1_age_group"
+                  }
+                ]
+              }
+            },
+            "specExtensions": {
+              "widgetBackgroundColor": {
+                "dark": "#320636"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 4,
+            "width": 6,
+            "height": 2
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    },
+    {
+      "name": "6264d160",
+      "displayName": "Loyalty Customer Insights",
+      "layout": [
+        {
+          "widget": {
+            "name": "32d52787",
+            "multilineTextboxSpec": {
+              "lines": [
+                "# <span style=\"font-weight: 700;\">Loyalty Customer Insights</span>\n",
+                "\n",
+                "*Explore who our purchasing customers are and how spending behavior differs across customer segments.*"
+              ]
+            },
+            "specExtensions": {
+              "widgetBackgroundColor": {
+                "dark": "#AB4057"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 12,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "purchasing-members",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "6a30cffb",
+                  "fields": [
+                    {
+                      "name": "countdistinct(customer_id)",
+                      "expression": "COUNT(DISTINCT `customer_id`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "showTitle": true,
+                "title": "Purchasing Members",
+                "showDescription": true,
+                "description": "How many members \nbought?"
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "countdistinct(customer_id)"
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            },
+            "specExtensions": {
+              "widgetBackgroundColor": {
+                "dark": "#091A36"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 4,
+            "width": 3,
+            "height": 4
+          }
+        },
+        {
+          "widget": {
+            "name": "20043ef0",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "6a30cffb",
+                  "fields": [
+                    {
+                      "name": "countdistinct(transaction_id)",
+                      "expression": "COUNT(DISTINCT `transaction_id`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "showTitle": true,
+                "title": "Loyalty Transactions",
+                "showDescription": true,
+                "description": "How many purchases \nwere made?\n"
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "countdistinct(transaction_id)"
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            },
+            "specExtensions": {
+              "widgetBackgroundColor": {
+                "dark": "#091A36"
+              }
+            }
+          },
+          "position": {
+            "x": 3,
+            "y": 4,
+            "width": 3,
+            "height": 4
+          }
+        },
+        {
+          "widget": {
+            "name": "12aa50d2",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "a1118899",
+                  "fields": [
+                    {
+                      "name": "sum(average_spend_per_member)",
+                      "expression": "SUM(`average_spend_per_member`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "showTitle": true,
+                "title": "Average Spend per Member",
+                "showDescription": true,
+                "description": "How much does each member spend?\n"
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(average_spend_per_member)",
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 2
+                    }
+                  },
+                  "formatTemplate": "₱{{ @formatted }}"
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            },
+            "specExtensions": {
+              "widgetBackgroundColor": {
+                "dark": "#091A36"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 4,
+            "width": 3,
+            "height": 4
+          }
+        },
+        {
+          "widget": {
+            "name": "3480f03a",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "2d9ddd7f",
+                  "fields": [
+                    {
+                      "name": "sum(transactions_per_member)",
+                      "expression": "SUM(`transactions_per_member`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "showTitle": true,
+                "title": "Transactions per Member",
+                "showDescription": true,
+                "description": "How often does each member buy?\n"
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(transactions_per_member)",
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 2
+                    }
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            },
+            "specExtensions": {
+              "widgetBackgroundColor": {
+                "dark": "#091A36"
+              }
+            }
+          },
+          "position": {
+            "x": 9,
+            "y": 4,
+            "width": 3,
+            "height": 4
+          }
+        },
+        {
+          "widget": {
+            "name": "sales-by-age-group",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "6a30cffb",
+                  "fields": [
+                    {
+                      "name": "age_group",
+                      "expression": "`age_group`"
+                    },
+                    {
+                      "name": "sum(recorded_sales)",
+                      "expression": "SUM(`recorded_sales`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "showTitle": true,
+                "title": "Sales by Age Group",
+                "showDescription": true,
+                "description": "Which age group generates the most sales?"
+              },
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "age_group",
+                  "axis": {
+                    "title": "AGE GROUP"
+                  },
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "y-reversed"
+                    }
+                  }
+                },
+                "y": {
+                  "fieldName": "sum(recorded_sales)",
+                  "axis": {
+                    "title": "SALES"
+                  },
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            },
+            "specExtensions": {
+              "widgetBackgroundColor": {
+                "dark": "#000000"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 8,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "purchasing-members-age-group-1",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "6a30cffb",
+                  "fields": [
+                    {
+                      "name": "age_group",
+                      "expression": "`age_group`"
+                    },
+                    {
+                      "name": "countdistinct(customer_id)",
+                      "expression": "COUNT(DISTINCT `customer_id`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "showTitle": true,
+                "title": "Purchasing Members by Age Group",
+                "showDescription": true,
+                "description": "Which age group has the most purchasing members?"
+              },
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "age_group",
+                  "axis": {
+                    "title": "AGE GROUP"
+                  },
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "y-reversed"
+                    }
+                  }
+                },
+                "y": {
+                  "fieldName": "countdistinct(customer_id)",
+                  "axis": {
+                    "title": "MEMBERS"
+                  },
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            },
+            "specExtensions": {
+              "widgetBackgroundColor": {
+                "dark": "#000000"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 8,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "average-spend-per-member-by-age-group",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "338cac6a",
+                  "fields": [
+                    {
+                      "name": "age_group",
+                      "expression": "`age_group`"
+                    },
+                    {
+                      "name": "sum(average_spend_per_member)",
+                      "expression": "SUM(`average_spend_per_member`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "showTitle": true,
+                "title": "Average Spend per Member by Age Group",
+                "showDescription": true,
+                "description": "Which age group spends the most per member?"
+              },
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "age_group",
+                  "axis": {
+                    "title": "AGE GROUP"
+                  },
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "y-reversed"
+                    }
+                  }
+                },
+                "y": {
+                  "fieldName": "sum(average_spend_per_member)",
+                  "axis": {
+                    "title": "AVEG. SPEND"
+                  },
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            },
+            "specExtensions": {
+              "widgetBackgroundColor": {
+                "dark": "#000000"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 14,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "monthly-loyalty-sales-trend",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "6a30cffb",
+                  "fields": [
+                    {
+                      "name": "monthly(transaction_date)",
+                      "expression": "DATE_TRUNC(\"MONTH\", `transaction_date`)"
+                    },
+                    {
+                      "name": "sum(recorded_sales)",
+                      "expression": "SUM(`recorded_sales`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "showTitle": true,
+                "title": "Monthly Loyalty Sales Trend",
+                "showDescription": true,
+                "description": "When do loyalty members generate the most sales?"
+              },
+              "mark": {
+                "colors": [
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 1
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 2
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 3
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 4
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 5
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 6
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 7
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 8
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 9
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 10
+                  }
+                ],
+                "size": 1.8
+              },
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "monthly(transaction_date)",
+                  "axis": {
+                    "title": "TRANSACTION DATE"
+                  },
+                  "scale": {
+                    "type": "temporal"
+                  }
+                },
+                "y": {
+                  "fieldName": "sum(recorded_sales)",
+                  "axis": {
+                    "title": "SALES"
+                  },
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            },
+            "specExtensions": {
+              "widgetBackgroundColor": {
+                "dark": "#000000"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 14,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "age-group1",
+            "queries": [
+              {
+                "name": "dashboards/01f19d5be1b518358ce3db0b6f43447c/datasets/01f19d5ca5fe12b5ae63049042dd23a1_age_group",
+                "query": {
+                  "datasetName": "6a30cffb",
+                  "fields": [
+                    {
+                      "name": "age_group",
+                      "expression": "`age_group`"
+                    },
+                    {
+                      "name": "age_group_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "showTitle": true,
+                "title": "Age Group",
+                "showDescription": true,
+                "description": "Compare loyalty behavior by age group"
+              },
+              "widgetType": "filter-multi-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "age_group",
+                    "queryName": "dashboards/01f19d5be1b518358ce3db0b6f43447c/datasets/01f19d5ca5fe12b5ae63049042dd23a1_age_group"
+                  }
+                ]
+              }
+            },
+            "specExtensions": {
+              "widgetBackgroundColor": {
+                "dark": "#320636"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 2,
+            "width": 6,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "42544c68",
+            "queries": [
+              {
+                "name": "dashboards/01f19d5be1b518358ce3db0b6f43447c/datasets/01f19d5ca5fe12b5ae63049042dd23a1_transaction_date",
+                "query": {
+                  "datasetName": "6a30cffb",
+                  "fields": [
+                    {
+                      "name": "transaction_date",
+                      "expression": "`transaction_date`"
+                    },
+                    {
+                      "name": "transaction_date_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "showTitle": true,
+                "title": "Transaction Date",
+                "showDescription": true,
+                "description": "View loyalty behavior for a selected period."
+              },
+              "widgetType": "filter-date-range-picker",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "transaction_date",
+                    "queryName": "dashboards/01f19d5be1b518358ce3db0b6f43447c/datasets/01f19d5ca5fe12b5ae63049042dd23a1_transaction_date"
+                  }
+                ]
+              }
+            },
+            "specExtensions": {
+              "widgetBackgroundColor": {
+                "dark": "#320636"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 2,
+            "width": 6,
+            "height": 2
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    }
+  ],
+  "uiSettings": {
+    "theme": {
+      "widgetHeaderAlignment": "ALIGNMENT_UNSPECIFIED"
+    },
+    "applyModeEnabled": false
+  }
+}
