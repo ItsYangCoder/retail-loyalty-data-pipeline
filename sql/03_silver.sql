@@ -1,29 +1,34 @@
+-- ============================================================
+-- 03_silver.sql
 -- SILVER LAYER
+--
+-- Purpose:
+-- Clean and standardize transaction and loyalty data.
+-- ============================================================
 
 USE CATALOG workspace;
 USE SCHEMA silver;
 
 
--- =========================================================
+-- ============================================================
 -- 1. CLEAN TRANSACTIONS
--- =========================================================
+-- ============================================================
 
---  Transaction cleaning
 CREATE OR REPLACE TEMP VIEW transactions_step AS
 
 SELECT
     customer_id,
     transaction_id,
 
-    -- convert receipt date from text to timestamp
+    -- Convert receipt date from text to timestamp
     TRY_TO_TIMESTAMP(receipt_date, 'M/d/yy H:mm') AS receipt_date,
 
     transaction_date,
 
-    -- remove spaces and hyphens
+    -- Remove hyphens and extra spaces
     REPLACE(TRIM(receipt_number), '-', '') AS receipt_number,
 
-    -- remove unnecessary symbols from product SKU
+    -- Remove unnecessary symbols from product SKU
     TRIM(
         REPLACE(
             REPLACE(
@@ -32,13 +37,13 @@ SELECT
         '*', '')
     ) AS product_sku,
 
-    -- recover missing brand if SKU clearly tells us the brand
+    -- Recover brand when the SKU clearly identifies it
     CASE
-        WHEN product_brand IS NULL
+        WHEN (product_brand IS NULL OR TRIM(product_brand) = '')
              AND UPPER(product_sku) LIKE '%UFC%'
             THEN 'UFC'
 
-        WHEN product_brand IS NULL
+        WHEN (product_brand IS NULL OR TRIM(product_brand) = '')
              AND (
                  UPPER(product_sku) LIKE 'DP %'
                  OR UPPER(product_sku) LIKE '%DPUTI%'
@@ -51,17 +56,17 @@ SELECT
 
     quantity,
 
-    -- this column contains the recorded sales amount
+    -- Recorded sales amount
     total_unit_price AS recorded_sales,
 
     TRIM(retailer) AS retailer,
 
-    -- standardize branch names
+    -- Standardize branch names
     UPPER(TRIM(branch)) AS branch
 
 FROM workspace.bronze.transaction_details_raw
 
--- exclude the 6 invalid transaction rows
+-- Exclude the 6 invalid transaction rows
 WHERE quantity > 0
   AND total_unit_price > 0;
 
@@ -83,16 +88,26 @@ SELECT
     retailer,
     branch,
 
-    -- sales amount divided by quantity
-    ROUND(recorded_sales / quantity, 2) AS calculated_unit_price,
+    -- Calculate price per unit
+    ROUND(
+        recorded_sales / NULLIF(quantity, 0),
+        2
+    ) AS calculated_unit_price,
 
-    -- month used for sales analysis
-    DATE_FORMAT(transaction_date, 'MMM yyyy') AS transaction_month,
+    -- Month for sales analysis
+    DATE_FORMAT(
+        transaction_date,
+        'MMM yyyy'
+    ) AS transaction_month,
 
-    -- keep receipt-date issues but flag them for review
+    -- Keep receipt-date issues but flag them
     CASE
+        WHEN receipt_date IS NULL
+            THEN 'Review receipt date'
+
         WHEN receipt_date > transaction_date + INTERVAL 1 DAY
             THEN 'Review receipt date'
+
         ELSE 'Valid'
     END AS data_quality_flag
 
@@ -100,24 +115,31 @@ FROM transactions_step;
 
 
 
--- =========================================================
+-- ============================================================
 -- 2. CLEAN LOYALTY CARDHOLDERS
--- =========================================================
+-- ============================================================
 
--- Validate birthdays first
 CREATE OR REPLACE TEMP VIEW loyalty_step AS
 
 SELECT
     user_id,
 
+    -- Invalid birthdays become NULL,
+    -- but the customer record is still retained
     CASE
-        WHEN birthday IS NULL THEN NULL
+        WHEN birthday IS NULL
+            THEN NULL
 
-        WHEN birthday > DATE(registered_date) THEN NULL
+        WHEN birthday > DATE(registered_date)
+            THEN NULL
 
         WHEN FLOOR(
-            DATEDIFF(DATE(registered_date), birthday) / 365.25
-        ) > 110 THEN NULL
+            DATEDIFF(
+                DATE(registered_date),
+                birthday
+            ) / 365.25
+        ) > 110
+            THEN NULL
 
         ELSE birthday
     END AS birthday,
@@ -128,7 +150,7 @@ FROM workspace.bronze.loyalty_cardholders_raw;
 
 
 
--- Calculate valid age
+-- Calculate age
 CREATE OR REPLACE TEMP VIEW loyalty_age_step AS
 
 SELECT
@@ -137,10 +159,14 @@ SELECT
     registered_date,
 
     CASE
-        WHEN birthday IS NULL THEN NULL
+        WHEN birthday IS NULL
+            THEN NULL
 
         ELSE FLOOR(
-            DATEDIFF(DATE(registered_date), birthday) / 365.25
+            DATEDIFF(
+                DATE(registered_date),
+                birthday
+            ) / 365.25
         )
     END AS age_at_registration
 
@@ -149,7 +175,8 @@ FROM loyalty_step;
 
 
 -- Create final clean loyalty table
-CREATE OR REPLACE TABLE workspace.silver.clean_loyalty AS
+CREATE OR REPLACE TABLE
+workspace.silver.clean_loyalty_cardholders AS
 
 SELECT
     user_id,
@@ -169,19 +196,20 @@ SELECT
     END AS age_group,
 
     CASE
-        WHEN birthday IS NULL THEN 'Invalid birthday'
+        WHEN birthday IS NULL
+            THEN 'Invalid birthday'
         ELSE 'Valid'
-    END AS birthday_status
+    END AS birthday_cleaning_status
 
 FROM loyalty_age_step;
 
 
 
--- =========================================================
--- 3. VALIDATION
--- =========================================================
+-- ============================================================
+-- 3. SILVER VALIDATION
+-- ============================================================
 
--- Check Silver row counts
+-- Check row counts
 SELECT
     'Clean Transactions' AS table_name,
     COUNT(*) AS row_count
@@ -190,13 +218,13 @@ FROM workspace.silver.clean_transactions
 UNION ALL
 
 SELECT
-    'Clean Loyalty',
+    'Clean Loyalty Cardholders',
     COUNT(*)
-FROM workspace.silver.clean_loyalty;
+FROM workspace.silver.clean_loyalty_cardholders;
 
 
 
--- Check receipt-date issues
+-- Check transaction quality flags
 SELECT
     data_quality_flag,
     COUNT(*) AS row_count
@@ -207,14 +235,34 @@ GROUP BY data_quality_flag;
 
 -- Check loyalty birthday status
 SELECT
-    birthday_status,
+    birthday_cleaning_status,
     COUNT(*) AS row_count
-FROM workspace.silver.clean_loyalty
-GROUP BY birthday_status;
+FROM workspace.silver.clean_loyalty_cardholders
+GROUP BY birthday_cleaning_status;
 
 
 
--- Check if missing brands were recovered
-SELECT COUNT(*) AS missing_product_brand
+-- Check missing brands
+SELECT
+    COUNT(*) AS missing_product_brand
 FROM workspace.silver.clean_transactions
-WHERE product_brand IS NULL;
+WHERE product_brand IS NULL
+   OR TRIM(product_brand) = '';
+
+
+
+-- Check missing loyalty IDs
+SELECT
+    COUNT(*) AS missing_user_id
+FROM workspace.silver.clean_loyalty_cardholders
+WHERE user_id IS NULL;
+
+
+
+-- Check duplicate loyalty IDs
+SELECT
+    user_id,
+    COUNT(*) AS duplicate_count
+FROM workspace.silver.clean_loyalty_cardholders
+GROUP BY user_id
+HAVING COUNT(*) > 1;
