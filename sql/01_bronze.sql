@@ -10,7 +10,7 @@ CREATE VOLUME IF NOT EXISTS workspace.bronze.source_files;
 -- Raw transaction data
 -- One row represents one product line from a transaction.
 CREATE TABLE IF NOT EXISTS workspace.bronze.transaction_details_raw (
-    `# customer_id` BIGINT,
+    customer_id BIGINT,
     transaction_id BIGINT,
     receipt_date STRING,
     transaction_date TIMESTAMP,
@@ -35,11 +35,12 @@ CREATE TABLE IF NOT EXISTS workspace.bronze.loyalty_cardholders_raw (
 SELECT
     'Transaction Details' AS source,
     COUNT(*) AS row_count
-FROM workspace.bronze.transaction_details_raw
+FROM read_files(
+  '/Volumes/workspace/bronze/source_files/transaction_details_raw.csv')
 
 UNION ALL
 
 SELECT
     'Loyalty Cardholders' AS source,
     COUNT(*) AS row_count
-FROM workspace.bronze.loyalty_cardholders_raw;
+FROM read_files('/Volumes/workspace/bronze/source_files/loyalty_cardholders_raw.csv');
