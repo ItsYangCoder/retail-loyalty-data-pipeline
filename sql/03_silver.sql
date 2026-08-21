@@ -21,7 +21,10 @@ SELECT
     transaction_id,
 
     -- Convert receipt date from text to timestamp
-    TRY_TO_TIMESTAMP(receipt_date, 'M/d/yy H:mm') AS receipt_date,
+    COALESCE(
+    TRY_TO_TIMESTAMP(receipt_date, 'yyyy-MM-dd HH:mm:ss'),
+    TRY_TO_TIMESTAMP(receipt_date, 'yyyy-MM-dd H:mm:ss')
+    ) AS receipt_date,
 
     transaction_date,
 
