@@ -1,17 +1,24 @@
--- Quality checks
--- Stores invalid or suspicious records before Silver cleaning.
+-- ============================================================
+-- 02_quality_checks.sql
+-- DATA QUALITY CHECKS
+--
+-- Purpose:
+-- Store invalid or suspicious records before Silver cleaning.
+-- ============================================================
 
 USE CATALOG workspace;
 USE SCHEMA quality;
 
 
+-- ============================================================
 -- 1. Invalid transactions
--- Remove rows with zero/negative quantity or recorded sales.
+-- Flag rows with zero/negative quantity or recorded sales.
+-- ============================================================
 
 CREATE OR REPLACE TABLE workspace.quality.invalid_transactions AS
 
 SELECT
-    `# customer_id` AS customer_id,
+    customer_id,
     transaction_id,
     receipt_date,
     transaction_date,
@@ -34,13 +41,16 @@ WHERE quantity <= 0
    OR total_unit_price <= 0;
 
 
+-- ============================================================
 -- 2. Receipt date issues
--- Keep valid transactions but flag receipts recorded more than 1 day later.
+-- Flag valid transactions with receipt dates
+-- more than 1 day after the transaction date.
+-- ============================================================
 
 CREATE OR REPLACE TABLE workspace.quality.receipt_date_issues AS
 
 SELECT
-    `# customer_id` AS customer_id,
+    customer_id,
     transaction_id,
     TRY_TO_TIMESTAMP(receipt_date, 'M/d/yy H:mm') AS receipt_date,
     transaction_date,
@@ -61,8 +71,10 @@ WHERE quantity > 0
       > transaction_date + INTERVAL 1 DAY;
 
 
+-- ============================================================
 -- 3. Invalid loyalty birthdays
--- Flag customers whose recorded age is over 110.
+-- Flag missing, future, or unrealistic birthday values.
+-- ============================================================
 
 CREATE OR REPLACE TABLE workspace.quality.invalid_loyalty_birthdays AS
 
@@ -70,14 +82,30 @@ SELECT
     user_id,
     birthday AS original_birthday,
     registered_date,
-    'Age over 110' AS quality_issue
+
+    CASE
+        WHEN birthday IS NULL
+            THEN 'Invalid or missing birthday'
+
+        WHEN birthday > CAST(registered_date AS DATE)
+            THEN 'Birthday after registration date'
+
+        WHEN YEAR(registered_date) - YEAR(birthday) > 110
+            THEN 'Age over 110'
+
+        ELSE 'Invalid birthday'
+    END AS quality_issue
 
 FROM workspace.bronze.loyalty_cardholders_raw
 
-WHERE YEAR(registered_date) - YEAR(birthday) > 110;
+WHERE birthday IS NULL
+   OR birthday > CAST(registered_date AS DATE)
+   OR YEAR(registered_date) - YEAR(birthday) > 110;
 
 
+-- ============================================================
 -- 4. Check results
+-- ============================================================
 
 SELECT
     'Invalid Transactions' AS quality_check,
